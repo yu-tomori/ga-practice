@@ -1,6 +1,7 @@
 import genetic
 import random
 import datetime
+import unittest
 
 def generate_parent(length):
  genes = []
@@ -19,27 +20,40 @@ def mutate(parent):
  childGenes[index] = alternate if newGene == childGenes[index] else newGene
  return ''.join(childGenes)
 
-def display(genes, target, startTime):
+def display(candidate, startTime):
  timeDiff = datetime.datetime.now() - startTime
- fitness = get_fitness(genes, target)
- print("{}\t{}\t{}".format(genes, fitness, timeDiff))
+ print("{}\t{}\t{}".format(candidate.Genes, candidate.Fitness, timeDiff))
 
-def test_Hello_World():
- target = "Hello World!"
- guess_password(target)
 
-def guess_password(target):
- geneset = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!."
- startTime = datetime.datetime.now()
+# when the unittest module's main function is called, it automatically executes each function whose name starts with test.
+class GuessPasswordTests(unittest.TestCase):
+ geneset = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!.,"
 
- def fnGetFitness(genes):
-  return get_fitness(genes, target)
+ def test_Hello_World(self):
+  target = "Hello World!"
+  self.guess_password(target)
+
+ def test_For_I_am_fearfully_and_wonderfully_made(self):
+  target = "For I am fearfully and wonderfully made."
+  self.guess_password(target)
+
+ def guess_password(self, target):
+  startTime = datetime.datetime.now()
+
+  def fnGetFitness(genes):
+   return get_fitness(genes, target)
  
- def fnDisplay(genes): 
-  display(genes, target, startTime)
+  def fnDisplay(candidate): 
+   display(candidate, startTime)
 
- optimalFitness = len(target)
- genetic.get_best(fnGetFitness, len(target), optimalFitness, geneset, fnDisplay)
+  optimalFitness = len(target)
+  best =  genetic.get_best(fnGetFitness, len(target), optimalFitness, self.geneset, fnDisplay)
+ 
+  self.assertEqual(best.Genes, target)
+
+ def test_benchmark(self):
+  genetic.Benchmark.run(self.test_For_I_am_fearfully_and_wonderfully_made)
 
 if __name__ == '__main__':
- test_Hello_World()
+ unittest.main()
+
