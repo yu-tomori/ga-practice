@@ -22,13 +22,14 @@ def mutate(parent):
 
 def display(candidate, startTime):
  timeDiff = datetime.datetime.now() - startTime
- print("{}\t{}\t{}".format(candidate.Genes, candidate.Fitness, timeDiff))
+ print("{}\t{}\t{}".format(''.join(candidate.Genes), candidate.Fitness, timeDiff))
 
 
 # when the unittest module's main function is called, it automatically executes each function whose name starts with test.
 class GuessPasswordTests(unittest.TestCase):
  geneset = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!.,"
 
+ 
  def test_Hello_World(self):
   target = "Hello World!"
   self.guess_password(target)
@@ -49,11 +50,24 @@ class GuessPasswordTests(unittest.TestCase):
   optimalFitness = len(target)
   best =  genetic.get_best(fnGetFitness, len(target), optimalFitness, self.geneset, fnDisplay)
  
-  self.assertEqual(best.Genes, target)
+  self.assertEqual(''.join(best.Genes), target)
 
+ def test_Random(self):
+  length = 150
+  target = ''.join(random.choice(self.geneset) for _ in range(length))
+  self.guess_password(target)
+
+ """
  def test_benchmark(self):
-  genetic.Benchmark.run(self.test_For_I_am_fearfully_and_wonderfully_made)
+  genetic.Benchmark.run(self.test_Random)
+ """
+
+ def test_onemax(self):
+  target = "1" * 100
+  self.geneset = '01'
+  self.guess_password(target)
 
 if __name__ == '__main__':
  unittest.main()
+
 

@@ -11,7 +11,6 @@ def _generate_parent(length, geneSet, get_fitness):
  while len(genes) < length:
   sampleSize = min(length - len(genes), len(geneSet))
   genes.extend(random.sample(geneSet, sampleSize))
- genes = ''.join(genes)
  fitness = get_fitness(genes)
  return Chromosome(genes, fitness)
 
@@ -21,13 +20,12 @@ class Chromosome:
   self.Fitness = fitness
 
 def _mutate(parent, geneSet, get_fitness):
+ childGenes = parent.Genes[:]
  index = random.randrange(0, len(parent.Genes))
- childGenes = list(parent.Genes)
  newGene, alternate = random.sample(geneSet, 2)
- childGenes[index] = alternate if newGene == childGenes[index] else newGene 
- genes = ''.join(childGenes)
- fitness = get_fitness(genes)
- return Chromosome(genes, fitness)
+ childGenes[index] = alternate if newGene == childGenes[index] else newGene
+ fitness = get_fitness(childGenes)
+ return Chromosome(childGenes, fitness)
 
 def get_best(get_fitness, targetLen, optimalFitness, geneSet, display):
  random.seed()
@@ -36,6 +34,7 @@ def get_best(get_fitness, targetLen, optimalFitness, geneSet, display):
  if bestParent.Fitness >= optimalFitness:
   return bestParent
 
+ # fitness got better and go next
  while True:
   child = _mutate(bestParent, geneSet, get_fitness)
  
