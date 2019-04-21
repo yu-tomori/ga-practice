@@ -1,0 +1,1 @@
+It must have a value greater than the gene to its left in the array.
