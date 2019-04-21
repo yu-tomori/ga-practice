@@ -1,7 +1,7 @@
-import genetic
-import random
 import datetime
+import random
 import unittest
+import genetic
 
 def generate_parent(length):
  genes = []
