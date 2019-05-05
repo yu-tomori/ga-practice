@@ -176,7 +176,7 @@ class Program:
 					func_id = func.Ops[index].FuncId
 					if func_id is None:
 						continue
-					if func_id >= len(funcs) or len(funcs[func_id].Ops) == 0:
+					if func_id >= func.Id or len(funcs[func_id].Ops) == 0:
 						del func.Ops[index]
 
 		for index in reversed(range(len(temp))):
@@ -268,6 +268,7 @@ class LawnmowerTests(unittest.TestCase):
 		self.run_with(geneSet, width, height, minGenes, maxGenes, expectedNumberOfInstructions, maxMutationRounds, fnCreateField, expectedNumberOfSteps)
 	"""
 
+	"""
 	def test_mow_turn_jump_func(self):
 		width = height = 8
 		geneSet = [lambda: Mow(), lambda: Turn(),
@@ -282,8 +283,9 @@ class LawnmowerTests(unittest.TestCase):
 			return lawnmower.ToroidField(width, height, lawnmower.FieldContents.Grass)
 
 		self.run_with(geneSet, width, height, minGenes, maxGenes, expectedNumberOfInstructions, maxMutationRounds, fnCreateField, expectedNumberOfSteps)
+	"""
 
-	def test_mow_turn_jump_func(self):
+	def test_mow_turn_jump_call(self):
 		width = height = 8
 		geneSet = [lambda: Mow(), lambda: Turn(),
 		lambda: Jump(random.randint(0, min(width, height)), random.randint(0, min(width, height))), lambda: Func(expectCall=True), lambda: Call(random.randint(0, 5))]

@@ -14,7 +14,7 @@ def _get_improvement(new_child, generate_parent, maxAge):
  
  while True:
   child = new_child(parent)
-  if bestParent.Fitness > child.Fitness:
+  if parent.Fitness > child.Fitness:
    if maxAge is None:
     continue
    parent.Age += 1
@@ -71,7 +71,7 @@ def _mutate_custom(parent, custom_mutate, get_fitness):
  return Chromosome(childGenes, fitness)
 
 def get_best(get_fitness, targetLen, optimalFitness, geneSet, display, custom_mutate=None, custom_create=None, maxAge=None):
- random.seed()
+# random.seed()
  
  if custom_mutate is None:
   def fnMutate(parent):

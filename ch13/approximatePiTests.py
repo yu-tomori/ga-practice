@@ -27,7 +27,7 @@ def mutate(genes, numBits):
 class ApproximatePiTests(unittest.TestCase):
 
  def test_benchmark(self):
-  genetic.Benchmark.run(lambda: self.test([136, 4, 264, 11, 1, 107, 173, 301, 45, 37])) 
+  genetic.Benchmark.run(lambda: self.test([136, 4, 264, 11, 1, 107, 173, 301, 45, 37]) 
 
  def test(self, bitValues=[512,256,128,64,32,16,8,4,2,1], maxSeconds=None):
   geneset = [i for i in range(2)]

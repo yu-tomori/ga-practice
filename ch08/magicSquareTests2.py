@@ -54,7 +54,7 @@ class Fitness:
 
 class MagicSquareTests(unittest.TestCase):
  def test_size_3(self):
-  self.generate(10, 5000)
+  self.generate(5, 500)
 
  def generate(self, diagonalSize, maxAge):
   nSquared = diagonalSize * diagonalSize
