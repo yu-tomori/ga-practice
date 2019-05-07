@@ -47,12 +47,16 @@ class GateWith2Inputs:
 		return 2
 
 class And(GateWith2Inputs):
-	def init(self, inputA, inputB):
+	def __init__(self, inputA, inputB):
 		super().__init__(inputA, inputB, type(self).__name__, lambda a, b: a and b)
 
 class Or(GateWith2Inputs):
 	def __init__(self, inputA, inputB):
 		super().__init__(inputA, inputB, type(self).__name__, lambda a, b: a or b)
+
+class Xor(GateWith2Inputs):
+	def __init__(self, inputA, inputB):
+		super().__init__(inputA, inputB, type(self).__name__, lambda a, b: a != b)
 
 class Source:
 	def __init__(self, sourceId, sourceContainer):

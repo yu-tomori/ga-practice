@@ -6,7 +6,7 @@ import genetic
 
 def get_fitness(genes, rules, inputs):
 	circuit = nodes_to_circuit(genes)[0]
-	sourceLabels = "ABC"
+	sourceLabels = "ABCD"
 	rulesPassed = 0
 	# inputs = dict()
 	for rule in rules:
@@ -81,7 +81,7 @@ class CircuitTests(unittest.TestCase):
 		cls.sources = [[lambda i1, i2: circuits.Source('B', cls.inputs), circuits.Source],
 						[lambda i1, i2: circuits.Source('A', cls.inputs), circuits.Source]]
 
-	def test_generate_OR(self):
+	def test_generate_0_OR(self):
 		rules = [[[False, False], False],
 				[[False, True], True],
 				[[True, False], True],
@@ -90,7 +90,7 @@ class CircuitTests(unittest.TestCase):
 		optimalLength = 6
 		self.find_circuit(rules, optimalLength)
 
-	def test_generate_XOR(self):
+	def test_generate_1_XOR(self):
 		rules = [[[False, False], False],
 				[[False, True], True],
 				[[True, False], True],
@@ -98,7 +98,7 @@ class CircuitTests(unittest.TestCase):
 		optimalLength = 11
 		self.find_circuit(rules, optimalLength)
 
-	def test_generate_AxBxC(self):
+	def test_generate_2_AxBxC(self):
 		rules = [[[False, False, False], False],
 				[[False, False, True], True],
 				[[False, True, False], True],
@@ -108,16 +108,57 @@ class CircuitTests(unittest.TestCase):
 				[[True, True, False], False],
 				[[True, True, True], True]]
 		self.sources.append([lambda l, r: circuits.Source('C', self.inputs), circuits.Source])
-		self.gates.append(circuits.Or, circuits.Or)
+		self.gates.append([circuits.Or, circuits.Or])
+		self.find_circuit(rules, 12)
+
+	def get_2_bit_adder_rules_for_bit(self, bit):
+		rules = [[[0,0,0,0], [0,0,0]],
+				[[0,0,0,1], [0,0,1]],
+				[[0,0,1,0], [0,1,0]],
+				[[0,0,1,1], [0,1,1]],
+				[[0,1,0,0], [0,0,1]],
+				[[0,1,0,1], [0,1,0]],
+				[[0,1,1,0], [0,1,1]],
+				[[0,1,1,1], [1,0,0]],
+				[[1,0,0,0], [0,1,0]],
+				[[1,0,0,1], [0,1,1]],
+				[[1,0,1,0], [1,0,0]],
+				[[1,0,1,1], [1,0,1]],
+				[[1,1,0,0], [0,1,1]],
+				[[1,1,0,1], [1,0,0]],
+				[[1,1,1,0], [1,0,1]],
+				[[1,1,1,1], [1,1,0]]]
+		bitNRules = [[rule[0], rule[1][2 - bit]] for rule in rules]
+		if not [circuits.Xor, circuits.Xor] in self.gates:
+			self.gates.append([circuits.Xor, circuits.Xor])
+		if not [lambda l, r: circuits.Source('D', self.inputs), circuits.Source] \
+				in self.sources:
+			self.sources.append([lambda l, r: circuits.Source('D', self.inputs), \
+				circuits.Source])
+		return bitNRules
+
+	def test_generate_3_2_bit_adder_1s_bit(self):
+		rules = self.get_2_bit_adder_rules_for_bit(0)
+		self.find_circuit(rules, 3)
+
+	def test_generate_4_2_bit_adder_2s_bit(self):
+		rules = self.get_2_bit_adder_rules_for_bit(1)
+		self.find_circuit(rules, 7)
+
+	def test_generate_5_2_bit_adder_4s_bit(self):
+		rules = self.get_2_bit_adder_rules_for_bit(2)
+		self.find_circuit(rules, 9)
 
 	def find_circuit(self, rules, expectedLength):
-		maxLength = expectedLength
 		startTime = datetime.datetime.now()
 
 		def fnGetFitness(genes):
 			return get_fitness(genes, rules, self.inputs)
 
-		def fnDisplay(candidate):
+		def fnDisplay(candidate, length=None):
+			if length is not None:
+				print("--distinct nodes in circuit:",
+				len(nodes_to_circuit(candidate.Genes)[1]))
 			display(candidate, startTime)
 
 		def fnCreateGene(index):
@@ -126,12 +167,34 @@ class CircuitTests(unittest.TestCase):
 		def fnMutate(genes):
 			mutate(genes, fnCreateGene, fnGetFitness, len(self.sources))
 
+		maxLength = 50
+
 		def fnCreate():
 			return [fnCreateGene(i) for i in range(maxLength)]
 
-		best = genetic.get_best(fnGetFitness, None, len(rules), None, fnDisplay, fnMutate, fnCreate, poolSize=3)
+		def fnOptimizationFunction(variableLength):
+			nonlocal maxLength
+			maxLength = variableLength
+			return genetic.get_best(fnGetFitness, None, len(rules), None, fnDisplay, fnMutate,
+								fnCreate, poolSize = 3, maxSeconds=30)
+
+		def fnIsImprovement(currentBest, child):
+			return child.Fitness == len(rules) and \
+					len(nodes_to_circuit(child.Genes)[1]) < \
+					len(nodes_to_circuit(currentBest.Genes)[1])
+
+		def fnIsOptimal(child):
+			return child.Fitness == len(rules) and \
+					len(nodes_to_circuit(child.Genes)[1]) <= expectedLength
+
+		def fnGetNextFeatureValue(currentBest):
+			return len(nodes_to_circuit(currentBest.Genes)[1])
+
+		best = genetic.hill_climbing(fnOptimizationFunction, fnIsImprovement, fnIsOptimal,
+									fnGetNextFeatureValue, fnDisplay, maxLength)
 		self.assertTrue(best.Fitness == len(rules))
 		self.assertFalse(len(nodes_to_circuit(best.Genes)[1]) > expectedLength)
+		print("\n")
 
 if __name__ == "__main__":
 	unittest.main()
