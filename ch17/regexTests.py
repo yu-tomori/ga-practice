@@ -30,13 +30,32 @@ class RegexTests(unittest.TestCase):
 		customOperators = [
 			partial(mutate_to_character_set_left, wanted=wanted)
 		]
-		self.find_regex(wanted, unwanted, 11)
+		self.find_regex(wanted, unwanted, 11, customOperators)
 
 	def test_even_length(self):
 		wanted = {'00','01','10','11','0000','0001','0010','0011','0100','0101','0110','1000',
 					'1001','1010','1011','1100','1101','1110','1111'}
-		unwanted = {'0','01','000','001','010','011','100','101','110','111',''}
-		self.find_regex(wanted, unwanted, 10)
+		unwanted = {'0','1','000','001','010','011','100','101','110','111',''}
+		customOperators = [mutate_to_character_set]
+		self.find_regex(wanted, unwanted, 10, customOperators)
+		
+	def test_50_state_codes(self):
+		UseGeneLength = True
+		wanted = {"AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
+		"KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY",
+		"NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI",
+		"WY"}
+		unwanted = {a + b for a in "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+				for b in "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+				if a + b not in wanted |
+				set(i for i in "ABCDEFGHIJKLMNOPQRSTUWVXYZ")}
+		customOperators = [
+			partial(mutate_to_character_set_left, wanted=wanted),
+			partial(mutate_to_character_set_right, wanted=wanted),
+			mutate_to_character_set,
+			partial(mutate_add_wanted, wanted=[i for i in wanted])
+		]
+		self.find_regex(wanted, unwanted, 120, customOperators)
 
 	def find_regex(self, wanted, unwanted, expectedLength, customOperators=None):
 		startTime = datetime.datetime.now()
@@ -65,11 +84,13 @@ class RegexTests(unittest.TestCase):
 		best = genetic.get_best(fnGetFitness, max(len(i) for i in textGenes),
 								optimalFitness, fullGeneset, fnDisplay, fnMutate, poolSize=10)
 		self.assertTrue(not optimalFitness > best.Fitness)
+		"""
 		for info in regexErrorsSeen.values():
 			print("")
 			print(info[0])
 			print(info[1])
 			print(info[2])
+		"""
 
 def get_fitness(genes, wanted, unwanted):
 	pattern = repair_regex(genes)
@@ -216,7 +237,8 @@ def mutate_to_character_set_left(genes, wanted):
 	if len(genes) < 4:
 		return False
 	ors = [i for i in range(-1, len(genes) - 3)
-		if (i==-1 or genes[i] in startMetas) and len(genes[i+1])==2 and
+		if (i==-1 or genes[i] in startMetas) and
+		len(genes[i+1])==2 and
 		genes[i+1] in wanted and
 		(len(genes) == i+1 or genes[i+2] == '|' or genes[i+2] in endMetas)]
 	if len(ors) == 0:
@@ -232,6 +254,32 @@ def mutate_to_character_set_left(genes, wanted):
 	characterSet.extend([genes[i+1][1] for i in choice])
 	characterSet.append(']')
 	for i in reversed(choice):
+		if i >= 0:
+			genes[i:i+2] = []
+	genes.extend(characterSet)
+	return True
+
+def mutate_to_character_set_right(genes, wanted):
+	if len(genes) < 4:
+		False
+	ors = [i for i in range(-1, len(genes) - 3)
+		if (i==-1 or genes[i] in startMetas) and
+		len(genes[i+1])==2 and
+		genes[i+1] in wanted and
+		(len(genes) == i+1 or genes[i+2] == '|' or genes[i+2] in endMetas)]
+	if len(ors) == 0:
+		return False
+	lookup = {}
+	for i in ors:
+		lookup.setdefault(genes[i+1][1], []).append(i)
+	min2 = [i for i in lookup.values() if len(i) > 1]
+	if len(min2) == 0:
+		return False
+	choice = random.choice(min2)
+	characterSet = ['|', '[']
+	characterSet.extend([genes[i+1][0] for i in choice])
+	characterSet.extend([']', genes[choice[0]+1][1]])
+	for  i in reversed(choice):
 		if i >= 0:
 			genes[i:i+2] = []
 	genes.extend(characterSet)
@@ -254,7 +302,13 @@ def mutate_to_character_set(genes):
 	genes[index-1:index+2] = sequence
 	return True
 
+def mutate_add_wanted(genes, wanted):
+	index = random.randrange(0, len(genes)+1) if len(genes) > 0 else 0
+	genes[index:index] = ['|'] + [random.choice(wanted)]
+	return True
+
 class Fitness:
+	UseRegexLength = False
 	def __init__(self, numWantedMatched, totalWanted, numUnwantedMatched, length):
 		self.NumWantedMatched = numWantedMatched
 		self._totalWanted = totalWanted
@@ -274,7 +328,7 @@ class Fitness:
 		if success != otherSuccess:
 			return success
 		if not success:
-			return False
+			return self.Length <= other.Length if Fitness.UseRegexLength else False
 		
 		return self.Length < other.Length
 
